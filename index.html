@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>✨ Trilha Rosa · Jogo Clássico de Tabuleiro ✨</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="board-wrapper">
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+        <div class="info-panel">
+            <div class="turn-indicator" id="turnIndicator">
+                <span class="piece-icon">🌸</span>
+                <span id="turnText">Jogador 1</span>
+            </div>
+            <div class="status-msg" id="statusMsg">
+                ✨ Fase de posicionamento ✨
+            </div>
+            <button id="resetButton">🌷 Novo Jogo</button>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 8px;">
+            <div class="phase-tag" id="phaseBadge">📌 Coloque suas peças</div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

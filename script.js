@@ -1,160 +1,139 @@
 (function() {
-    // Configurações do tabuleiro estilo geométrico
-    const BOARD_SIZE = 700;
-    const PADDING = 60;
-    const GRID_SIZE = BOARD_SIZE - (PADDING * 2);
+    const BOARD_SIZE = 600;
+    const MARGIN = 80;
+    const CELL_SIZE = (BOARD_SIZE - MARGIN * 2) / 8;
     
-    // Pontos do tabuleiro - estilo geométrico com 24 pontos
-    // Organizado em 3 anéis: externo, médio e interno
-    const pointsCoords = [];
-    
-    // Função para gerar coordenadas dos pontos
-    function generatePoints() {
-        const centerX = BOARD_SIZE / 2;
-        const centerY = BOARD_SIZE / 2;
+    // Pontos do tabuleiro - estilo trilha clássica (24 pontos)
+    // Layout baseado no formato tradicional do jogo de trilha
+    const pointsCoords = [
+        // Canto superior esquerdo (quadrado externo)
+        {x: MARGIN, y: MARGIN},                          // 0
+        {x: MARGIN + CELL_SIZE * 2, y: MARGIN},          // 1
+        {x: MARGIN + CELL_SIZE * 4, y: MARGIN},          // 2
+        {x: MARGIN + CELL_SIZE * 6, y: MARGIN},          // 3
+        {x: MARGIN + CELL_SIZE * 8, y: MARGIN},          // 4
         
-        // Anel externo (raio maior)
-        const outerRadius = 280;
-        // Anel médio
-        const middleRadius = 190;
-        // Anel interno
-        const innerRadius = 100;
+        // Lado direito
+        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 2}, // 5
+        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 4}, // 6
+        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 6}, // 7
+        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 8}, // 8
         
-        // Ângulos para os 12 pontos (30 graus cada)
-        const angles = [];
-        for (let i = 0; i < 12; i++) {
-            angles.push((i * 30) * Math.PI / 180);
-        }
+        // Canto inferior direito
+        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 8}, // 9
+        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 8}, // 10
+        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 8}, // 11
+        {x: MARGIN, y: MARGIN + CELL_SIZE * 8},                 // 12
         
-        // Anel externo (pontos 0-11)
-        for (let i = 0; i < 12; i++) {
-            pointsCoords.push({
-                x: centerX + outerRadius * Math.cos(angles[i]),
-                y: centerY + outerRadius * Math.sin(angles[i]),
-                ring: 'outer',
-                angle: angles[i]
-            });
-        }
+        // Lado esquerdo
+        {x: MARGIN, y: MARGIN + CELL_SIZE * 6},                 // 13
+        {x: MARGIN, y: MARGIN + CELL_SIZE * 4},                 // 14
+        {x: MARGIN, y: MARGIN + CELL_SIZE * 2},                 // 15
         
-        // Anel médio (pontos 12-23)
-        for (let i = 0; i < 12; i++) {
-            pointsCoords.push({
-                x: centerX + middleRadius * Math.cos(angles[i]),
-                y: centerY + middleRadius * Math.sin(angles[i]),
-                ring: 'middle',
-                angle: angles[i]
-            });
-        }
-        
-        // Anel interno (pontos 24-35)
-        for (let i = 0; i < 12; i++) {
-            pointsCoords.push({
-                x: centerX + innerRadius * Math.cos(angles[i]),
-                y: centerY + innerRadius * Math.sin(angles[i]),
-                ring: 'inner',
-                angle: angles[i]
-            });
-        }
-    }
-    
-    generatePoints();
-    
-    // Definição das conexões (arestas) - estilo tabuleiro de trilha clássico
-    const edges = [];
-    
-    // Conexões entre pontos do mesmo anel (adjacentes)
-    for (let ring = 0; ring < 3; ring++) {
-        const startIdx = ring * 12;
-        for (let i = 0; i < 11; i++) {
-            edges.push([startIdx + i, startIdx + i + 1]);
-        }
-        edges.push([startIdx + 11, startIdx]); // Fecha o círculo
-    }
-    
-    // Conexões radiais entre os anéis (mesmo ângulo)
-    for (let i = 0; i < 12; i++) {
-        edges.push([i, i + 12]);          // externo -> médio
-        edges.push([i + 12, i + 24]);     // médio -> interno
-    }
-    
-    // Conexões em cruz (formando trilhas especiais)
-    // Adicionando algumas diagonais para criar mais possibilidades de trilhas
-    const specialEdges = [
-        // Ligações entre pontos em ângulos opostos
-        [0, 6], [1, 7], [2, 8], [3, 9], [4, 10], [5, 11], // externo opostos
-        [12, 18], [13, 19], [14, 20], [15, 21], [16, 22], [17, 23], // médio opostos
-        [24, 30], [25, 31], [26, 32], [27, 33], [28, 34], [29, 35] // interno opostos
+        // Quadrado interno
+        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 2}, // 16
+        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 2}, // 17
+        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 2}, // 18
+        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 4}, // 19
+        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 6}, // 20
+        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 6}, // 21
+        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 6}, // 22
+        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 4}  // 23
     ];
     
-    specialEdges.forEach(edge => edges.push(edge));
+    // Conexões entre os pontos (arestas do tabuleiro)
+    const edges = [
+        // Quadrado externo (superior)
+        [0,1], [1,2], [2,3], [3,4],
+        // Lado direito
+        [4,5], [5,6], [6,7], [7,8],
+        // Quadrado externo (inferior)
+        [8,9], [9,10], [10,11], [11,12],
+        // Lado esquerdo
+        [12,13], [13,14], [14,15], [15,0],
+        
+        // Quadrado interno
+        [16,17], [17,18], [18,19], [19,20], [20,21], [21,22], [22,23], [23,16],
+        
+        // Conexões entre quadrados (externo -> interno)
+        [1,17], [2,18], [3,19],
+        [5,18], [6,19], [7,20],
+        [9,21], [10,22], [11,23],
+        [13,22], [14,23], [15,16],
+        
+        // Conexões diagonais/internas
+        [0,16], [4,18], [8,20], [12,22]
+    ];
     
-    // Definição de todas as combinações de trilhas (mill)
-    const millCombinations = [];
+    // Combinações de trilhas (3 pontos em linha reta)
+    const millCombinations = [
+        // Linhas horizontais do quadrado externo
+        [0,1,2,3,4],
+        [4,5,6,7,8],
+        [8,9,10,11,12],
+        [12,13,14,15,0],
+        
+        // Linhas horizontais do quadrado interno
+        [16,17,18,19,20,21,22,23,16],
+        
+        // Linhas verticais e diagonais para formar trilhas de 3
+        [0,15,14], [1,17,23], [2,18,22], [3,19,21], [4,5,6],
+        [4,3,2], [8,7,6], [8,9,10], [12,11,10], [12,13,14],
+        [16,23,22], [16,17,18], [18,19,20], [20,21,22]
+    ];
     
-    // Trilhas horizontais/verticais no mesmo anel (grupos de 3)
-    for (let ring = 0; ring < 3; ring++) {
-        const startIdx = ring * 12;
-        for (let i = 0; i < 12; i++) {
-            // Grupos de 3 pontos consecutivos
-            const p1 = startIdx + i;
-            const p2 = startIdx + ((i + 1) % 12);
-            const p3 = startIdx + ((i + 2) % 12);
-            millCombinations.push([p1, p2, p3]);
+    // Filtrar para apenas combinações de 3 pontos
+    const validMills = [];
+    for (const combo of millCombinations) {
+        for (let i = 0; i <= combo.length - 3; i++) {
+            validMills.push([combo[i], combo[i+1], combo[i+2]]);
         }
     }
     
-    // Trilhas radiais (mesmo ângulo nos 3 anéis)
-    for (let i = 0; i < 12; i++) {
-        millCombinations.push([i, i + 12, i + 24]);
-    }
-    
-    // Trilhas em formato de estrela (opostos)
-    for (let i = 0; i < 6; i++) {
-        millCombinations.push([i, i + 6, i + 12]);
-        millCombinations.push([i + 12, i + 18, i + 24]);
-    }
-    
-    // Remover combinações duplicadas
-    const uniqueMills = [];
-    const millStrings = new Set();
-    for (const mill of millCombinations) {
-        const sorted = [...mill].sort((a,b) => a-b);
-        const key = sorted.join(',');
-        if (!millStrings.has(key)) {
-            millStrings.add(key);
-            uniqueMills.push(mill);
-        }
-    }
-    
-    // Cores tema rosa
     const PLAYER1_COLOR = "#E8436E";
-    const PLAYER2_COLOR = "#FF9FBF";
-    const PLAYER1_GLOW = "#FFB7D0";
-    const PLAYER2_GLOW = "#FFCDE5";
+    const PLAYER2_COLOR = "#FFA5C0";
     
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
     
-    // Ajustar tamanho do canvas
-    function resizeCanvas() {
-        const container = canvas.parentElement;
-        const size = Math.min(container.clientWidth, 700);
-        canvas.style.width = `${size}px`;
-        canvas.style.height = `${size}px`;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    
     // Estado do jogo
-    let board = Array(36).fill(null);
+    let board = Array(24).fill(null);
     let currentPlayer = 'P1';
     let phase = 'place';
     let piecesPlaced = { P1: 0, P2: 0 };
-    const TOTAL_PIECES = 12;
+    const TOTAL_PIECES = 9;
     
     let selectedPoint = null;
     let waitingForRemoval = false;
-    let currentMills = [];
+    
+    // Verificar se 3 pontos formam uma trilha
+    function isMill(p1, p2, p3, player) {
+        return board[p1] === player && board[p2] === player && board[p3] === player;
+    }
+    
+    // Encontrar todas as trilhas formadas por um ponto
+    function getMillsForPoint(pointIdx, player) {
+        const mills = [];
+        for (const combo of validMills) {
+            if (combo.includes(pointIdx) && combo.every(idx => board[idx] === player)) {
+                mills.push(combo);
+            }
+        }
+        return mills;
+    }
+    
+    // Verificar e lidar com trilha
+    function checkAndHandleMill(pointIdx, player) {
+        const mills = getMillsForPoint(pointIdx, player);
+        if (mills.length > 0) {
+            waitingForRemoval = true;
+            phase = 'remove';
+            updateUI();
+            drawBoard();
+            return true;
+        }
+        return false;
+    }
     
     // Obter peças removíveis do oponente
     function getRemovablePieces(opponent) {
@@ -165,51 +144,25 @@
         
         if (opponentIndices.length === 0) return [];
         
-        // Encontrar mills do oponente
-        const opponentMills = [];
-        for (const combo of uniqueMills) {
+        // Encontrar peças que estão em trilhas
+        const piecesInMills = new Set();
+        for (const combo of validMills) {
             if (combo.every(idx => board[idx] === opponent)) {
-                opponentMills.push(combo);
+                combo.forEach(idx => piecesInMills.add(idx));
             }
         }
         
-        const piecesInMills = new Set();
-        opponentMills.forEach(mill => {
-            mill.forEach(idx => piecesInMills.add(idx));
-        });
-        
-        // Se todas as peças estão em mills, pode remover qualquer uma
+        // Se todas as peças estão em trilhas, pode remover qualquer uma
         if (piecesInMills.size === opponentIndices.length) {
             return opponentIndices;
         }
         
-        // Caso contrário, só remove peças que não estão em mills
+        // Caso contrário, só remove peças que não estão em trilhas
         return opponentIndices.filter(idx => !piecesInMills.has(idx));
-    }
-    
-    // Verificar se um ponto forma uma mill
-    function checkAndHandleMill(pointIdx, player) {
-        const newMills = [];
-        for (const combo of uniqueMills) {
-            if (combo.includes(pointIdx) && combo.every(idx => board[idx] === player)) {
-                newMills.push(combo);
-            }
-        }
-        
-        if (newMills.length > 0) {
-            currentMills = newMills;
-            waitingForRemoval = true;
-            phase = 'remove';
-            updateUI();
-            drawBoard();
-            return true;
-        }
-        return false;
     }
     
     // Remover peça
     function removePiece(pointIdx) {
-        if (board[pointIdx] === null) return false;
         const opponent = currentPlayer === 'P1' ? 'P2' : 'P1';
         if (board[pointIdx] !== opponent) return false;
         
@@ -218,7 +171,6 @@
         
         board[pointIdx] = null;
         
-        // Verificar vitória
         const remainingOpponent = board.filter(p => p === opponent).length;
         if (remainingOpponent < 3) {
             endGame(currentPlayer);
@@ -226,8 +178,6 @@
         }
         
         waitingForRemoval = false;
-        currentMills = [];
-        
         switchPlayer();
         updateUI();
         drawBoard();
@@ -238,7 +188,7 @@
     function endGame(winner) {
         const winnerName = winner === 'P1' ? 'Jogador 1 🌸' : 'Jogador 2 💖';
         setTimeout(() => {
-            alert(`🎉 ${winnerName} venceu o jogo! 🎉\nClique em "Novo Jogo" para jogar novamente.`);
+            alert(`🎉 ${winnerName} venceu! 🎉`);
         }, 50);
         resetGame();
     }
@@ -270,7 +220,6 @@
         if (board[fromIdx] !== currentPlayer) return false;
         if (board[toIdx] !== null) return false;
         
-        // Verificar se é movimento válido
         const isValidMove = edges.some(edge => 
             (edge[0] === fromIdx && edge[1] === toIdx) || 
             (edge[1] === fromIdx && edge[0] === toIdx)
@@ -340,7 +289,7 @@
         const mouseY = (e.clientY - rect.top) * scaleY;
         
         let clickedPoint = null;
-        let minDist = 25;
+        let minDist = 20;
         for (let i = 0; i < pointsCoords.length; i++) {
             const p = pointsCoords[i];
             const dx = p.x - mouseX;
@@ -388,7 +337,7 @@
         const mouseY = (e.clientY - rect.top) * scaleY;
         
         let clickedPoint = null;
-        let minDist = 25;
+        let minDist = 20;
         for (let i = 0; i < pointsCoords.length; i++) {
             const p = pointsCoords[i];
             const dx = p.x - mouseX;
@@ -413,14 +362,13 @@
         ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
         
         // Fundo rosa claro
-        ctx.fillStyle = "#fffafc";
+        ctx.fillStyle = "#fff5f9";
         ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
         
-        // Desenhar linhas (arestas)
+        // Desenhar linhas
         ctx.beginPath();
         ctx.strokeStyle = "#E87A9E";
         ctx.lineWidth = 3;
-        ctx.shadowBlur = 0;
         
         for (const edge of edges) {
             const p1 = pointsCoords[edge[0]];
@@ -441,89 +389,62 @@
                 ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
                 ctx.fillStyle = "#FFE0ED";
                 ctx.fill();
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = "#FFB7D0";
             }
             
             const piece = board[i];
             
             if (piece === 'P1') {
-                // Peça do jogador 1 - rosa intenso
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
                 ctx.fillStyle = PLAYER1_COLOR;
                 ctx.fill();
                 ctx.strokeStyle = "#B32D54";
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                
-                // Brilho interno
-                ctx.beginPath();
-                ctx.arc(p.x - 3, p.y - 3, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255,255,255,0.4)";
-                ctx.fill();
-                
                 ctx.fillStyle = "white";
-                ctx.font = "bold 24px 'Segoe UI Emoji'";
+                ctx.font = "bold 22px 'Segoe UI Emoji'";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("🌸", p.x, p.y);
             } 
             else if (piece === 'P2') {
-                // Peça do jogador 2 - rosa claro
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
                 ctx.fillStyle = PLAYER2_COLOR;
                 ctx.fill();
                 ctx.strokeStyle = "#E87A9E";
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.arc(p.x - 3, p.y - 3, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "rgba(255,255,255,0.5)";
-                ctx.fill();
-                
                 ctx.fillStyle = "#B54A73";
-                ctx.font = "bold 24px 'Segoe UI Emoji'";
+                ctx.font = "bold 22px 'Segoe UI Emoji'";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("💖", p.x, p.y);
             } else {
-                // Ponto vazio
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-                ctx.fillStyle = "#FFE0EB";
+                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = "#FFD0E2";
                 ctx.fill();
                 ctx.strokeStyle = "#F5A9C4";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1.5;
                 ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "#F5B0CB";
-                ctx.fill();
             }
         }
-        
-        ctx.shadowBlur = 0;
     }
     
     // Atualizar interface
     function updateUI() {
         const turnPlayer = document.getElementById('turnPlayer');
         const turnPiece = document.getElementById('turnPiece');
-        const gameStatus = document.querySelector('.status-text');
+        const statusText = document.querySelector('.status-text');
         const player1Card = document.getElementById('player1Card');
         const player2Card = document.getElementById('player2Card');
         const player1Pieces = document.getElementById('player1Pieces');
         const player2Pieces = document.getElementById('player2Pieces');
         
-        // Atualizar contagem de peças
         player1Pieces.textContent = `${piecesPlaced.P1} / ${TOTAL_PIECES}`;
         player2Pieces.textContent = `${piecesPlaced.P2} / ${TOTAL_PIECES}`;
         
-        // Destacar jogador ativo
         if (currentPlayer === 'P1') {
             player1Card.classList.add('active');
             player2Card.classList.remove('active');
@@ -539,14 +460,14 @@
         turnPiece.textContent = playerIcon;
         
         if (waitingForRemoval) {
-            gameStatus.textContent = `🗑️ ${playerName}, remova uma peça adversária!`;
+            statusText.textContent = `🗑️ ${playerName}, remova uma peça!`;
         } 
         else if (phase === 'place') {
             const remaining = TOTAL_PIECES - piecesPlaced[currentPlayer];
-            gameStatus.textContent = `📍 Fase de Posicionamento · Coloque sua peça (${remaining} restantes)`;
+            statusText.textContent = `📍 Coloque sua peça (${remaining} restam)`;
         } 
         else if (phase === 'move') {
-            gameStatus.textContent = `♟️ Fase de Movimento · Mova uma de suas peças`;
+            statusText.textContent = `♟️ Mova uma peça`;
         }
     }
     
@@ -558,7 +479,6 @@
         piecesPlaced = { P1: 0, P2: 0 };
         selectedPoint = null;
         waitingForRemoval = false;
-        currentMills = [];
         updateUI();
         drawBoard();
     }
@@ -578,5 +498,4 @@
     
     // Inicializar
     resetGame();
-    drawBoard();
 })();

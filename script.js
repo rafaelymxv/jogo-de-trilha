@@ -1,94 +1,97 @@
 (function() {
     const BOARD_SIZE = 600;
-    const MARGIN = 80;
-    const CELL_SIZE = (BOARD_SIZE - MARGIN * 2) / 8;
+    const PADDING = 60;
     
-    // Pontos do tabuleiro - estilo trilha clássica (24 pontos)
-    // Layout baseado no formato tradicional do jogo de trilha
-    const pointsCoords = [
-        // Canto superior esquerdo (quadrado externo)
-        {x: MARGIN, y: MARGIN},                          // 0
-        {x: MARGIN + CELL_SIZE * 2, y: MARGIN},          // 1
-        {x: MARGIN + CELL_SIZE * 4, y: MARGIN},          // 2
-        {x: MARGIN + CELL_SIZE * 6, y: MARGIN},          // 3
-        {x: MARGIN + CELL_SIZE * 8, y: MARGIN},          // 4
-        
-        // Lado direito
-        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 2}, // 5
-        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 4}, // 6
-        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 6}, // 7
-        {x: MARGIN + CELL_SIZE * 8, y: MARGIN + CELL_SIZE * 8}, // 8
-        
-        // Canto inferior direito
-        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 8}, // 9
-        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 8}, // 10
-        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 8}, // 11
-        {x: MARGIN, y: MARGIN + CELL_SIZE * 8},                 // 12
-        
-        // Lado esquerdo
-        {x: MARGIN, y: MARGIN + CELL_SIZE * 6},                 // 13
-        {x: MARGIN, y: MARGIN + CELL_SIZE * 4},                 // 14
-        {x: MARGIN, y: MARGIN + CELL_SIZE * 2},                 // 15
-        
-        // Quadrado interno
-        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 2}, // 16
-        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 2}, // 17
-        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 2}, // 18
-        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 4}, // 19
-        {x: MARGIN + CELL_SIZE * 6, y: MARGIN + CELL_SIZE * 6}, // 20
-        {x: MARGIN + CELL_SIZE * 4, y: MARGIN + CELL_SIZE * 6}, // 21
-        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 6}, // 22
-        {x: MARGIN + CELL_SIZE * 2, y: MARGIN + CELL_SIZE * 4}  // 23
+    // Pontos do tabuleiro de trilha original (3 quadrados concêntricos com 8 pontos cada = 24 pontos)
+    const pointsCoords = [];
+    
+    // Definir os 3 quadrados concêntricos
+    const squares = [
+        { size: 420, name: 'outer' },   // quadrado externo
+        { size: 280, name: 'middle' },  // quadrado médio
+        { size: 140, name: 'inner' }    // quadrado interno
     ];
     
-    // Conexões entre os pontos (arestas do tabuleiro)
-    const edges = [
-        // Quadrado externo (superior)
-        [0,1], [1,2], [2,3], [3,4],
-        // Lado direito
-        [4,5], [5,6], [6,7], [7,8],
-        // Quadrado externo (inferior)
-        [8,9], [9,10], [10,11], [11,12],
-        // Lado esquerdo
-        [12,13], [13,14], [14,15], [15,0],
+    // Gerar pontos para cada quadrado (4 cantos + 4 pontos médios = 8 pontos por quadrado)
+    squares.forEach((square, squareIdx) => {
+        const center = BOARD_SIZE / 2;
+        const halfSize = square.size / 2;
         
-        // Quadrado interno
-        [16,17], [17,18], [18,19], [19,20], [20,21], [21,22], [22,23], [23,16],
+        // Pontos nos cantos
+        const corners = [
+            { x: center - halfSize, y: center - halfSize }, // topo esquerdo
+            { x: center + halfSize, y: center - halfSize }, // topo direito
+            { x: center + halfSize, y: center + halfSize }, // inferior direito
+            { x: center - halfSize, y: center + halfSize }  // inferior esquerdo
+        ];
         
-        // Conexões entre quadrados (externo -> interno)
-        [1,17], [2,18], [3,19],
-        [5,18], [6,19], [7,20],
-        [9,21], [10,22], [11,23],
-        [13,22], [14,23], [15,16],
+        // Pontos nos meios dos lados
+        const midPoints = [
+            { x: center, y: center - halfSize },             // topo meio
+            { x: center + halfSize, y: center },             // direita meio
+            { x: center, y: center + halfSize },             // inferior meio
+            { x: center - halfSize, y: center }              // esquerda meio
+        ];
         
-        // Conexões diagonais/internas
-        [0,16], [4,18], [8,20], [12,22]
-    ];
+        // Adicionar na ordem: cantos e depois meios
+        corners.forEach(corner => pointsCoords.push(corner));
+        midPoints.forEach(mid => pointsCoords.push(mid));
+    });
+    
+    // Definir as conexões (arestas) do tabuleiro
+    const edges = [];
+    
+    // Conexões dentro de cada quadrado
+    for (let square = 0; square < 3; square++) {
+        const startIdx = square * 8;
+        
+        // Conexões entre pontos consecutivos no quadrado
+        for (let i = 0; i < 7; i++) {
+            edges.push([startIdx + i, startIdx + i + 1]);
+        }
+        // Fechar o quadrado (último com primeiro)
+        edges.push([startIdx + 7, startIdx]);
+        
+        // Conexões especiais: canto com canto oposto (diagonais dos quadrados)
+        edges.push([startIdx, startIdx + 2]);     // canto superior esq -> canto superior dir
+        edges.push([startIdx + 2, startIdx + 4]); // canto superior dir -> canto inferior dir
+        edges.push([startIdx + 4, startIdx + 6]); // canto inferior dir -> canto inferior esq
+        edges.push([startIdx + 6, startIdx]);     // canto inferior esq -> canto superior esq
+    }
+    
+    // Conexões entre quadrados (radiais)
+    for (let i = 0; i < 8; i++) {
+        // Conectar quadrado externo com médio
+        edges.push([i, i + 8]);
+        // Conectar quadrado médio com interno
+        edges.push([i + 8, i + 16]);
+    }
+    
+    // Conexões entre cantos opostos dos quadrados (formando X)
+    edges.push([0, 4]);   // canto sup esq externo -> canto sup dir externo
+    edges.push([4, 8]);   // canto sup dir externo -> canto sup dir médio
+    edges.push([2, 6]);   // canto sup dir externo -> canto inf dir externo
+    edges.push([6, 10]);  // canto inf dir externo -> canto inf dir médio
+    edges.push([1, 5]);   // meio sup externo -> meio dir externo
+    edges.push([5, 9]);   // meio dir externo -> meio dir médio
     
     // Combinações de trilhas (3 pontos em linha reta)
     const millCombinations = [
         // Linhas horizontais do quadrado externo
-        [0,1,2,3,4],
-        [4,5,6,7,8],
-        [8,9,10,11,12],
-        [12,13,14,15,0],
-        
+        [0, 1, 2], [2, 3, 4], [4, 5, 6], [6, 7, 0],
+        // Linhas horizontais do quadrado médio
+        [8, 9, 10], [10, 11, 12], [12, 13, 14], [14, 15, 8],
         // Linhas horizontais do quadrado interno
-        [16,17,18,19,20,21,22,23,16],
+        [16, 17, 18], [18, 19, 20], [20, 21, 22], [22, 23, 16],
         
-        // Linhas verticais e diagonais para formar trilhas de 3
-        [0,15,14], [1,17,23], [2,18,22], [3,19,21], [4,5,6],
-        [4,3,2], [8,7,6], [8,9,10], [12,11,10], [12,13,14],
-        [16,23,22], [16,17,18], [18,19,20], [20,21,22]
+        // Linhas verticais
+        [0, 8, 16], [2, 10, 18], [4, 12, 20], [6, 14, 22],
+        [1, 9, 17], [3, 11, 19], [5, 13, 21], [7, 15, 23],
+        
+        // Diagonais
+        [0, 9, 18], [2, 11, 20], [4, 13, 22], [6, 15, 16],
+        [1, 10, 19], [3, 12, 21], [5, 14, 23], [7, 8, 17]
     ];
-    
-    // Filtrar para apenas combinações de 3 pontos
-    const validMills = [];
-    for (const combo of millCombinations) {
-        for (let i = 0; i <= combo.length - 3; i++) {
-            validMills.push([combo[i], combo[i+1], combo[i+2]]);
-        }
-    }
     
     const PLAYER1_COLOR = "#E8436E";
     const PLAYER2_COLOR = "#FFA5C0";
@@ -114,7 +117,7 @@
     // Encontrar todas as trilhas formadas por um ponto
     function getMillsForPoint(pointIdx, player) {
         const mills = [];
-        for (const combo of validMills) {
+        for (const combo of millCombinations) {
             if (combo.includes(pointIdx) && combo.every(idx => board[idx] === player)) {
                 mills.push(combo);
             }
@@ -146,7 +149,7 @@
         
         // Encontrar peças que estão em trilhas
         const piecesInMills = new Set();
-        for (const combo of validMills) {
+        for (const combo of millCombinations) {
             if (combo.every(idx => board[idx] === opponent)) {
                 combo.forEach(idx => piecesInMills.add(idx));
             }
@@ -188,7 +191,7 @@
     function endGame(winner) {
         const winnerName = winner === 'P1' ? 'Jogador 1 🌸' : 'Jogador 2 💖';
         setTimeout(() => {
-            alert(`🎉 ${winnerName} venceu! 🎉`);
+            alert(`🎉 ${winnerName} venceu o jogo! 🎉`);
         }, 50);
         resetGame();
     }
@@ -289,7 +292,7 @@
         const mouseY = (e.clientY - rect.top) * scaleY;
         
         let clickedPoint = null;
-        let minDist = 20;
+        let minDist = 25;
         for (let i = 0; i < pointsCoords.length; i++) {
             const p = pointsCoords[i];
             const dx = p.x - mouseX;
@@ -337,7 +340,7 @@
         const mouseY = (e.clientY - rect.top) * scaleY;
         
         let clickedPoint = null;
-        let minDist = 20;
+        let minDist = 25;
         for (let i = 0; i < pointsCoords.length; i++) {
             const p = pointsCoords[i];
             const dx = p.x - mouseX;
@@ -362,10 +365,10 @@
         ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
         
         // Fundo rosa claro
-        ctx.fillStyle = "#fff5f9";
+        ctx.fillStyle = "#fff8fb";
         ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
         
-        // Desenhar linhas
+        // Desenhar linhas do tabuleiro
         ctx.beginPath();
         ctx.strokeStyle = "#E87A9E";
         ctx.lineWidth = 3;
@@ -379,6 +382,21 @@
             ctx.stroke();
         }
         
+        // Desenhar os quadrados concêntricos (para dar ênfase)
+        ctx.beginPath();
+        ctx.strokeStyle = "#F5A9C4";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        
+        const center = BOARD_SIZE / 2;
+        [210, 140, 70].forEach(size => {
+            ctx.beginPath();
+            ctx.rect(center - size, center - size, size * 2, size * 2);
+            ctx.stroke();
+        });
+        
+        ctx.setLineDash([]);
+        
         // Desenhar pontos e peças
         for (let i = 0; i < pointsCoords.length; i++) {
             const p = pointsCoords[i];
@@ -386,50 +404,73 @@
             // Destaque para ponto selecionado
             if (selectedPoint === i) {
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 24, 0, Math.PI * 2);
                 ctx.fillStyle = "#FFE0ED";
                 ctx.fill();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "#FFB7D0";
             }
             
             const piece = board[i];
             
             if (piece === 'P1') {
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
                 ctx.fillStyle = PLAYER1_COLOR;
                 ctx.fill();
                 ctx.strokeStyle = "#B32D54";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
+                
+                // Brilho
+                ctx.beginPath();
+                ctx.arc(p.x - 3, p.y - 3, 5, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255,0.4)";
+                ctx.fill();
+                
                 ctx.fillStyle = "white";
-                ctx.font = "bold 22px 'Segoe UI Emoji'";
+                ctx.font = "bold 24px 'Segoe UI Emoji'";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("🌸", p.x, p.y);
             } 
             else if (piece === 'P2') {
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
                 ctx.fillStyle = PLAYER2_COLOR;
                 ctx.fill();
                 ctx.strokeStyle = "#E87A9E";
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 2.5;
                 ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(p.x - 3, p.y - 3, 5, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255,255,255,0.5)";
+                ctx.fill();
+                
                 ctx.fillStyle = "#B54A73";
-                ctx.font = "bold 22px 'Segoe UI Emoji'";
+                ctx.font = "bold 24px 'Segoe UI Emoji'";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "middle";
                 ctx.fillText("💖", p.x, p.y);
             } else {
+                // Ponto vazio
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
-                ctx.fillStyle = "#FFD0E2";
+                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                ctx.fillStyle = "#FFE0EB";
                 ctx.fill();
                 ctx.strokeStyle = "#F5A9C4";
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = "#F5B0CB";
+                ctx.fill();
             }
         }
+        
+        ctx.shadowBlur = 0;
     }
     
     // Atualizar interface
@@ -460,14 +501,14 @@
         turnPiece.textContent = playerIcon;
         
         if (waitingForRemoval) {
-            statusText.textContent = `🗑️ ${playerName}, remova uma peça!`;
+            statusText.textContent = `🗑️ ${playerName}, remova uma peça do oponente!`;
         } 
         else if (phase === 'place') {
             const remaining = TOTAL_PIECES - piecesPlaced[currentPlayer];
-            statusText.textContent = `📍 Coloque sua peça (${remaining} restam)`;
+            statusText.textContent = `📍 Posicione sua peça (${remaining} restantes)`;
         } 
         else if (phase === 'move') {
-            statusText.textContent = `♟️ Mova uma peça`;
+            statusText.textContent = `♟️ Mova uma de suas peças`;
         }
     }
     

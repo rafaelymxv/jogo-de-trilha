@@ -7,7 +7,7 @@
 }
 
 body {
-    background: linear-gradient(135deg, #f8a5c2 0%, #f598b8 50%, #f08cb0 100%);
+    background: linear-gradient(135deg, #f5a9c4 0%, #f08cb0 50%, #e87a9e 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -17,7 +17,7 @@ body {
 }
 
 .game-wrapper {
-    max-width: 800px;
+    max-width: 750px;
     width: 100%;
     margin: 0 auto;
 }
@@ -44,7 +44,7 @@ canvas {
     height: auto;
     cursor: pointer;
     border-radius: 20px;
-    background: #fff5f9;
+    background: #fff8fb;
 }
 
 .info-area {
